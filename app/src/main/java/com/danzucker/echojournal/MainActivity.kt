@@ -11,7 +11,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.danzucker.echojournal.ui.theme.EchoJournalTheme
+import com.danzucker.echojournal.core.presentation.designsystem.theme.EchoJournalTheme
+import com.danzucker.echojournal.echos.presentation.echos.EchosRoot
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,12 +20,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             EchoJournalTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+               EchosRoot()
             }
         }
     }
