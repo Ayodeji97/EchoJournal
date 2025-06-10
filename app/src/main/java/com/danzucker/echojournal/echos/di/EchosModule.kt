@@ -4,12 +4,15 @@ import com.danzucker.echojournal.echos.data.audio.AndroidAudioPlayer
 import com.danzucker.echojournal.echos.data.echo.RoomEchoDataSource
 import com.danzucker.echojournal.echos.data.recording.AndroidVoiceRecorder
 import com.danzucker.echojournal.echos.data.recording.InternalRecordingStorage
+import com.danzucker.echojournal.echos.data.settings.DataStoreSettings
 import com.danzucker.echojournal.echos.domain.audio.AudioPlayer
 import com.danzucker.echojournal.echos.domain.echo.EchoDataSource
 import com.danzucker.echojournal.echos.domain.recording.RecordingStorage
 import com.danzucker.echojournal.echos.domain.recording.VoiceRecorder
+import com.danzucker.echojournal.echos.domain.settings.SettingsPreferences
 import com.danzucker.echojournal.echos.presentation.createecho.CreateEchoViewModel
 import com.danzucker.echojournal.echos.presentation.echos.EchosViewModel
+import com.danzucker.echojournal.echos.presentation.settings.SettingsViewModel
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.bind
@@ -20,9 +23,10 @@ val echoModule = module {
     singleOf(::InternalRecordingStorage) bind RecordingStorage::class
     singleOf(::AndroidAudioPlayer) bind AudioPlayer::class
     singleOf(::RoomEchoDataSource) bind EchoDataSource::class
-//    singleOf(::DataStoreSettings) bind SettingsPreferences::class
-//
+    singleOf(::DataStoreSettings) bind SettingsPreferences::class
+
+    // ViewModels
     viewModelOf(::EchosViewModel)
     viewModelOf(::CreateEchoViewModel)
-//    viewModelOf(::SettingsViewModel)
+    viewModelOf(::SettingsViewModel)
 }

@@ -12,6 +12,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
 import com.danzucker.echojournal.echos.presentation.createecho.CreateEchoRoot
 import com.danzucker.echojournal.echos.presentation.echos.EchosRoot
+import com.danzucker.echojournal.echos.presentation.settings.SettingsRoot
 import com.danzucker.echojournal.echos.presentation.util.toCreateEchoRoute
 
 const val ACTION_CREATE_ECHO = "com.plcoding.CREATE_ECHO"
@@ -39,9 +40,9 @@ fun NavigationRoot(
                 onNavigateToCreateEcho = { details ->
                     navController.navigate(details.toCreateEchoRoute())
                 },
-//                onNavigateToSettings = {
-//                    navController.navigate(NavigationRoute.Settings)
-//                }
+                onNavigateToSettings = {
+                    navController.navigate(NavigationRoute.Settings)
+                }
             )
         }
         composable<NavigationRoute.CreateEcho> {
@@ -51,9 +52,9 @@ fun NavigationRoot(
             )
         }
         composable<NavigationRoute.Settings> {
-//            SettingsRoot(
-//                onGoBack = navController::navigateUp
-//            )
+            SettingsRoot(
+                onBackClick = navController::navigateUp
+            )
         }
     }
 }
