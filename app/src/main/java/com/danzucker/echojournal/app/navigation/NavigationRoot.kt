@@ -1,11 +1,6 @@
 package com.danzucker.echojournal.app.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -15,7 +10,7 @@ import com.danzucker.echojournal.echos.presentation.echos.EchosRoot
 import com.danzucker.echojournal.echos.presentation.settings.SettingsRoot
 import com.danzucker.echojournal.echos.presentation.util.toCreateEchoRoute
 
-const val ACTION_CREATE_ECHO = "com.plcoding.CREATE_ECHO"
+const val ACTION_CREATE_ECHO = "com.danzucker.CREATE_ECHO"
 
 @Composable
 fun NavigationRoot(
