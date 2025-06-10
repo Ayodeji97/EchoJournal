@@ -1,5 +1,10 @@
 package com.danzucker.echojournal.echos.presentation.echos
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,24 +15,71 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.danzucker.echojournal.R
 import com.danzucker.echojournal.core.presentation.designsystem.theme.EchoJournalTheme
 import com.danzucker.echojournal.core.presentation.designsystem.theme.bgGradient
+import com.danzucker.echojournal.core.presentation.util.ObserveAsEvents
+import com.danzucker.echojournal.core.presentation.util.isAppInForeground
+import com.danzucker.echojournal.echos.domain.recording.RecordingDetails
 import com.danzucker.echojournal.echos.presentation.echos.component.EchoEmptyScreen
 import com.danzucker.echojournal.echos.presentation.echos.component.EchoFilterRow
 import com.danzucker.echojournal.echos.presentation.echos.component.EchoList
-import com.danzucker.echojournal.echos.presentation.echos.component.EchoRecordFloatingActionButton
+import com.danzucker.echojournal.echos.presentation.echos.component.EchoQuickRecordFloatingActionButton
+import com.danzucker.echojournal.echos.presentation.echos.component.EchoRecordingSheet
 import com.danzucker.echojournal.echos.presentation.echos.component.EchosTopBar
+import com.danzucker.echojournal.echos.presentation.echos.models.AudioCaptureMethod
+import com.danzucker.echojournal.echos.presentation.echos.models.RecordingState
+import org.koin.androidx.compose.koinViewModel
+import timber.log.Timber
 
 @Composable
 fun EchosRoot(
-    viewModel: EchosViewModel = viewModel()
+    onNavigateToCreateEcho: (RecordingDetails) -> Unit,
+    viewModel: EchosViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted && state.currentCaptureMethod == AudioCaptureMethod.STANDARD) {
+            viewModel.onAction(EchosAction.OnAudioPermissionGranted)
+        }
+    }
+
+    val context = LocalContext.current
+    ObserveAsEvents(viewModel.events) { event ->
+        when(event) {
+            is EchosEvent.RequestAudioPermission -> {
+                permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            }
+            is EchosEvent.RecordingTooShort -> {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.audio_recording_was_too_short),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+            is EchosEvent.OnDoneRecording -> {
+                Timber.d("Recording done!")
+                onNavigateToCreateEcho(event.details)
+            }
+        }
+    }
+
+    val isAppInForeground by isAppInForeground()
+    LaunchedEffect(isAppInForeground, state.recordingState) {
+        if (state.recordingState == RecordingState.NORMAL_CAPTURE && !isAppInForeground) {
+            viewModel.onAction(EchosAction.OnPauseRecordingClick)
+        }
+    }
 
     EchosScreen(
         state = state,
@@ -40,7 +92,7 @@ fun EchosScreen(
     state: EchosState,
     onAction: (EchosAction) -> Unit,
 ) {
-
+    val context = LocalContext.current
     Scaffold(
         topBar = {
             EchosTopBar(
@@ -50,9 +102,28 @@ fun EchosScreen(
             )
         },
         floatingActionButton = {
-            EchoRecordFloatingActionButton(
+            EchoQuickRecordFloatingActionButton(
                 onClick = {
                     onAction(EchosAction.OnRecordFabClick)
+                },
+                isQuickRecording = state.recordingState == RecordingState.QUICK_CAPTURE,
+                onLongPressEnd = { cancelledRecording ->
+                    if (cancelledRecording) {
+                        onAction(EchosAction.OnCancelRecording)
+                    } else {
+                        onAction(EchosAction.OnCompleteRecording)
+                    }
+                },
+                onLongPressStart = {
+                    val hasPermission = ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.RECORD_AUDIO
+                    ) == PackageManager.PERMISSION_GRANTED
+                    if (hasPermission) {
+                        onAction(EchosAction.OnRecordButtonLongClick)
+                    } else {
+                        onAction(EchosAction.OnRequestPermissionQuickRecording)
+                    }
                 }
             )
         }
@@ -109,6 +180,17 @@ fun EchosScreen(
                     )
                 }
             }
+        }
+
+        if(state.recordingState in listOf(RecordingState.NORMAL_CAPTURE, RecordingState.PAUSED)) {
+            EchoRecordingSheet(
+                formattedRecordDuration = state.formattedRecordDuration,
+                isRecording = state.recordingState == RecordingState.NORMAL_CAPTURE,
+                onDismiss = { onAction(EchosAction.OnCancelRecording) },
+                onPauseClick = { onAction(EchosAction.OnPauseRecordingClick) },
+                onResumeClick = { onAction(EchosAction.OnResumeRecordingClick) },
+                onCompleteRecording = { onAction(EchosAction.OnCompleteRecording) },
+            )
         }
 
     }
